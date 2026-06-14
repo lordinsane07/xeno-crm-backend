@@ -63,7 +63,7 @@ export function buildSegmentQuery(rules: SegmentRules): BuiltQuery {
       )
       SELECT id, name, email, phone, channel_preference, city, tags, created_at,
              total_orders, total_spend, avg_order_value, last_order_date
-      FROM customer_stats
+      FROM customer_stats c
       WHERE ${whereClause}
       ORDER BY name ASC
     `;
