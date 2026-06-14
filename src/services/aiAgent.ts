@@ -154,7 +154,7 @@ const TOOLS: any[] = [
         search: { type: 'string', description: 'Search by name or email' },
         city: { type: 'string', description: 'Filter by city' },
         tag: { type: 'string', description: 'Filter by tag (vip, churned, new)' },
-        limit: { type: 'number', description: 'Max results to return (default 10)' }
+        limit: { type: 'string', description: 'Max results to return (default 10)' }
       }
     }
   },
@@ -164,7 +164,7 @@ const TOOLS: any[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        limit: { type: 'number', description: 'Number of campaigns to return (default 5)' }
+        limit: { type: 'string', description: 'Number of campaigns to return (default 5)' }
       }
     }
   }
