@@ -209,17 +209,28 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       }
 
       case 'create_campaign': {
+        let sid = String(input.segment_id);
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(sid)) {
+          const segLookup = await query('SELECT id FROM segments WHERE name ILIKE $1 LIMIT 1', [`%${sid}%`]);
+          if (segLookup.rows.length > 0) {
+            sid = segLookup.rows[0].id;
+          } else {
+            throw new Error(`Could not find a segment named "${sid}". Please create the segment first.`);
+          }
+        }
+
         const result = await query(
           `INSERT INTO campaigns (name, segment_id, message_template, channel, status, created_by)
            VALUES ($1, $2, $3, $4, 'draft', 'ai')
            RETURNING id, name, status`,
-          [input.name, input.segment_id, input.message_template, input.channel]
+          [input.name, sid, input.message_template, input.channel]
         );
 
         // Get segment info for context
         const segResult = await query(
           'SELECT name, customer_count FROM segments WHERE id = $1',
-          [input.segment_id]
+          [sid]
         );
 
         return JSON.stringify({
