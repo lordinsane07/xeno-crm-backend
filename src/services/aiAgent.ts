@@ -245,7 +245,18 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       }
 
       case 'launch_campaign': {
-        const result = await launchCampaign(String(input.campaign_id));
+        let cid = String(input.campaign_id);
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(cid)) {
+          const campLookup = await query('SELECT id FROM campaigns WHERE name ILIKE $1 ORDER BY created_at DESC LIMIT 1', [`%${cid}%`]);
+          if (campLookup.rows.length > 0) {
+            cid = campLookup.rows[0].id;
+          } else {
+            throw new Error(`Could not find a campaign named "${cid}".`);
+          }
+        }
+
+        const result = await launchCampaign(cid);
         return JSON.stringify({
           success: true,
           campaign_id: result.campaignId,
@@ -255,6 +266,17 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       }
 
       case 'get_campaign_stats': {
+        let cid = String(input.campaign_id);
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(cid)) {
+          const campLookup = await query('SELECT id FROM campaigns WHERE name ILIKE $1 ORDER BY created_at DESC LIMIT 1', [`%${cid}%`]);
+          if (campLookup.rows.length > 0) {
+            cid = campLookup.rows[0].id;
+          } else {
+            throw new Error(`Could not find a campaign named "${cid}".`);
+          }
+        }
+
         const statsResult = await query(
           `SELECT
              COUNT(*)::int AS total,
@@ -266,7 +288,7 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
              COUNT(*) FILTER (WHERE status = 'clicked')::int AS clicked
            FROM communications
            WHERE campaign_id = $1`,
-          [input.campaign_id]
+          [cid]
         );
 
         const s = statsResult.rows[0];
